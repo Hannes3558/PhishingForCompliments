@@ -1,0 +1,243 @@
+/* ===== Grundstil "KomplimentOS" ===== */
+.root {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 13px;
+    -primary: #1F5FBF;
+    -danger: #D32F2F;
+    -ok: #2E7D32;
+}
+
+.h1 { -fx-font-size: 22px; -fx-font-weight: bold; }
+.h2 { -fx-font-size: 16px; -fx-font-weight: bold; }
+.bold { -fx-font-weight: bold; }
+.muted { -fx-text-fill: #5f6b7a; }
+.error-text { -fx-text-fill: -danger; -fx-font-weight: bold; }
+.code { -fx-font-family: "Consolas", "Courier New", monospace; }
+
+.btn-primary {
+    -fx-background-color: -primary;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 7 18 7 18;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+.btn-primary:hover { -fx-background-color: derive(-primary, 20%); }
+.btn-danger {
+    -fx-background-color: -danger;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 7 18 7 18;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+.btn-danger:hover { -fx-background-color: derive(-danger, 20%); }
+.btn-end-day {
+    -fx-background-color: #F9A825;
+    -fx-text-fill: #1e2a3a;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+.btn-end-day:hover { -fx-background-color: #FBC02D; }
+
+/* Achtung: hier KEIN "-fx-background: transparent" setzen – das macht Label-Text weiß. */
+.plain-scroll { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; }
+.plain-scroll > .viewport { -fx-background-color: transparent; }
+
+/* ===== Titelbildschirm ===== */
+.title-screen {
+    -fx-background-color: linear-gradient(to bottom, #7EC8F5 0%, #DDF1FF 55%, #8FD48F 100%);
+}
+.title-card {
+    -fx-background-color: rgba(255, 255, 255, 0.88);
+    -fx-background-radius: 18;
+    -fx-border-color: rgba(31, 95, 191, 0.35);
+    -fx-border-radius: 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 24, 0.2, 0, 8);
+}
+.title-text {
+    -fx-font-size: 42px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1F5FBF;
+    -fx-line-spacing: -6px;
+}
+
+/* ===== Desktop ===== */
+.wallpaper {
+    -fx-background-color: linear-gradient(to bottom, #5EB7F0 0%, #BFE6FF 70%);
+}
+.desktop-icon {
+    -fx-padding: 8;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+.desktop-icon:hover { -fx-background-color: rgba(255,255,255,0.35); }
+.desktop-icon-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-text-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 3, 0.6, 0, 1);
+}
+.badge {
+    -fx-background-color: -danger;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 1 6 1 6;
+    -fx-background-radius: 10;
+}
+
+.taskbar {
+    -fx-background-color: #1e2a3a;
+}
+.taskbar-text { -fx-text-fill: #d8e0ea; }
+.taskbar-clock { -fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold; }
+.taskbar .menu-button {
+    -fx-background-color: #2f3f55;
+    -fx-background-radius: 6;
+}
+/* Nur das Label DIREKT im Button weiß färben. Ein Nachfahren-Selektor (".menu-button .label")
+   würde auch die Einträge im aufgeklappten Menü treffen – das Popup hängt im CSS am Button. */
+.taskbar .menu-button > .label { -fx-text-fill: white; }
+.taskbar .menu-button > .arrow-button > .arrow { -fx-background-color: white; }
+
+/* Aufgeklappte Menüs: dunkler Text auf weißem Grund, Auswahl weiß auf Blau */
+.context-menu {
+    -fx-background-color: white;
+    -fx-border-color: #b9c2cf;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 4;
+}
+.context-menu .menu-item { -fx-background-color: transparent; -fx-padding: 6 14 6 14; -fx-background-radius: 4; }
+.context-menu .menu-item .label { -fx-text-fill: #1e2a3a; }
+.context-menu .menu-item:focused { -fx-background-color: -primary; }
+.context-menu .menu-item:focused .label { -fx-text-fill: white; }
+.context-menu .separator .line { -fx-border-color: #dde3ea transparent transparent transparent; }
+.taskbar .progress-bar .bar { -fx-background-color: #F9A825; -fx-background-insets: 2; -fx-background-radius: 3; }
+.taskbar .progress-bar .track { -fx-background-color: #2f3f55; -fx-background-radius: 3; }
+
+.pause-overlay { -fx-background-color: rgba(10, 20, 35, 0.75); }
+.pause-title { -fx-font-size: 48px; -fx-font-weight: bold; -fx-text-fill: white; }
+.pause-hint { -fx-text-fill: #d8e0ea; }
+
+/* ===== Fenster ===== */
+.desktop-window {
+    -fx-background-color: #f7f8fa;
+    -fx-border-color: #9aa4b2;
+    -fx-border-width: 1;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 18, 0.2, 0, 6);
+}
+.window-titlebar {
+    -fx-background-color: linear-gradient(to bottom, #e9edf3, #d7dde6);
+    -fx-background-radius: 6 6 0 0;
+    -fx-border-color: transparent transparent #b9c2cf transparent;
+}
+.window-title { -fx-font-weight: bold; -fx-text-fill: #1e2a3a; }
+.window-close {
+    -fx-background-color: #E53935;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 1 8 1 8;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+.window-close:hover { -fx-background-color: #C62828; }
+
+/* ===== Mail-Programm ===== */
+.inbox-pane { -fx-background-color: #eef1f5; -fx-border-color: transparent #c9d1dc transparent transparent; }
+.inbox-title { -fx-font-weight: bold; -fx-padding: 8 10 8 10; -fx-font-size: 14px; }
+.mail-list { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; }
+.mail-list .list-cell { -fx-background-color: transparent; -fx-padding: 8 8 8 8; -fx-border-color: transparent transparent #dde3ea transparent; }
+.mail-list .list-cell:empty { -fx-border-color: transparent; }
+.mail-list .list-cell:filled:selected { -fx-background: #d6e4fa; -fx-background-color: -fx-background; }
+.mail-list .list-cell:filled:hover { -fx-background: #e4ecf7; -fx-background-color: -fx-background; }
+.mail-subject { -fx-text-fill: #2f3b4a; -fx-font-size: 12px; }
+.mail-subject-big { -fx-font-size: 18px; -fx-font-weight: bold; }
+.mail-body { -fx-font-size: 13px; -fx-line-spacing: 3px; -fx-padding: 4 6 4 6; }
+.status-bar {
+    -fx-background-color: #e2e7ee;
+    -fx-padding: 4 10 4 10;
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-text-fill: #1e2a3a;
+}
+.attachment-chip {
+    -fx-background-color: white;
+    -fx-border-color: #b9c2cf;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 3 8 3 8;
+}
+.placeholder { -fx-text-fill: #7b8794; -fx-font-size: 15px; -fx-text-alignment: center; }
+
+.feature-hot {
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-border-color: transparent;
+    -fx-border-width: 1.5;
+    -fx-cursor: hand;
+}
+.feature-hot:hover {
+    -fx-background-color: rgba(255, 213, 79, 0.35);
+    -fx-border-color: #F9A825;
+}
+.mail-toolbar {
+    -fx-background-color: #e9edf3;
+    -fx-border-color: transparent transparent #c9d1dc transparent;
+}
+.inspect-button {
+    -fx-background-color: white;
+    -fx-border-color: #9aa4b2;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-text-fill: #1e2a3a;
+    -fx-padding: 4 10 4 10;
+    -fx-cursor: hand;
+}
+.inspect-button:hover { -fx-background-color: #FFF3C4; -fx-border-color: #F9A825; }
+.inspect-new { -fx-border-color: #F9A825; -fx-border-width: 2; -fx-font-weight: bold; }
+.inspect-locked { -fx-opacity: 0.45; }
+
+.caution {
+    -fx-background-color: #FFF8E1;
+    -fx-border-color: #F9A825;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8 10 8 10;
+    -fx-text-fill: #5D4037;
+}
+
+.feedback-ok { -fx-background-color: #E8F5E9; -fx-border-color: -ok; -fx-border-radius: 6; -fx-background-radius: 6; }
+.feedback-bad { -fx-background-color: #FFEBEE; -fx-border-color: -danger; -fx-border-radius: 6; -fx-background-radius: 6; }
+
+/* ===== Vergleich ===== */
+.compare-column {
+    -fx-background-color: white;
+    -fx-border-color: #c9d1dc;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+.compare-heading { -fx-font-weight: bold; -fx-text-fill: -primary; -fx-font-size: 14px; }
+.compare-text { -fx-font-family: "Consolas", "Courier New", monospace; -fx-font-size: 12.5px; }
+.compare-arrows { -fx-font-size: 28px; -fx-text-fill: #7b8794; }
+.rule-text { -fx-font-style: italic; -fx-text-fill: #37474F; }
+
+/* ===== Guidelines / Handbuch / Chef ===== */
+.section { -fx-background-color: white; -fx-border-color: #dde3ea; -fx-border-radius: 8; -fx-background-radius: 8; }
+.handbook { -fx-background-color: #FFFBEA; }
+.handbook-text { -fx-font-size: 14px; -fx-line-spacing: 3px; }
+.chef-note { -fx-background-color: #FFFDE7; }
+.chef-text { -fx-font-size: 13.5px; -fx-line-spacing: 2px; }
+
+/* ===== Tagesbericht ===== */
+.report-screen { -fx-background-color: #f1f3f6; }
+.report-summary { -fx-font-size: 14px; -fx-text-fill: #37474F; }
+.result-ok { -fx-background-color: white; -fx-border-color: -ok; -fx-border-width: 0 0 0 5; -fx-background-radius: 4; }
+.result-bad { -fx-background-color: white; -fx-border-color: -danger; -fx-border-width: 0 0 0 5; -fx-background-radius: 4; }
+.mark-ok { -fx-text-fill: -ok; -fx-font-weight: bold; -fx-font-size: 16px; }
+.mark-bad { -fx-text-fill: -danger; -fx-font-weight: bold; -fx-font-size: 16px; }
+.verdict-ok { -fx-background-color: #E8F5E9; -fx-padding: 14; -fx-background-radius: 8; -fx-font-size: 14px; }
+.verdict-bad { -fx-background-color: #FFEBEE; -fx-padding: 14; -fx-background-radius: 8; -fx-font-size: 14px; }

@@ -1,0 +1,67 @@
+# ------------------------------------------------------------------
+# Build-Ausgaben
+# ------------------------------------------------------------------
+# Maven (inkl. jpackage-Abbild, app.zip und Selbsttest-Ordner von build-exe.ps1)
+target/
+# Fertige Einzeldatei-.exe (~30 MB) – wird mit packaging/build-exe.ps1 gebaut, nicht eingecheckt
+/dist/
+# IntelliJ-eigener Compiler-Output (falls ohne Maven gebaut)
+/out/
+
+# Maven-Wrapper-JAR wird gebraucht (mvnw), auch falls später *.jar ignoriert wird
+!.mvn/wrapper/maven-wrapper.jar
+
+# ------------------------------------------------------------------
+# IDEs
+# ------------------------------------------------------------------
+# IntelliJ: komplett ignoriert. Das Projekt kommt aus der pom.xml (IntelliJ importiert sie
+# automatisch); .idea/misc.xml enthält z. B. den lokalen JDK-Namen und würde im Team stören.
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+
+# ------------------------------------------------------------------
+# Java / Logs
+# ------------------------------------------------------------------
+hs_err_pid*.log
+replay_pid*.log
+*.log
+
+# ------------------------------------------------------------------
+# Betriebssysteme
+# ------------------------------------------------------------------
+# Windows
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+# macOS
+.DS_Store
+._*
+# Linux
+*~
+
+# ------------------------------------------------------------------
+# Claude Code (persönliche Einstellungen; CLAUDE.md wird eingecheckt)
+# ------------------------------------------------------------------
+.claude/settings.local.json
+CLAUDE.local.md
