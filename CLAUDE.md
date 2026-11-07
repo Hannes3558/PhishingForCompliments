@@ -58,12 +58,20 @@ model/   Records & Enums ohne JavaFX   (Email, Feature, Difficulty, GameState, D
 logic/   Spiellogik ohne JavaFX        (CorporateGuidelines, RuleChecker, MailTemplates, MailDraft,
                                         Manipulations, MailGenerator, GameSession, ChefMessages,
                                         SaveGameService)
-ui/      JavaFX-Views, programmatisch  (TitleScreen, DesktopScreen, DesktopWindow, MailAppView,
+ui/      JavaFX-Views, programmatisch  (TitleScreen, DesktopScreen, DesktopWindow, Taskbar, MailAppView,
                                         ComparisonView, GuidelinesView, HandbookView, ChefMessageView,
                                         DayReportScreen, LogoView, PauseOverlay)
 PhishingApp   Application + Szenenwechsel      Launcher   main()
 resources/…/styles.css   gesamtes Styling (Theme "KomplimentOS")
 ```
+
+**Fenster & Taskleiste:** Jedes Programm ist ein `DesktopWindow` (ziehbar, minimierbar, schließbar) im
+`windowLayer` des `DesktopScreen`. Neue Fenster immer über `DesktopScreen.open()` bzw. `addWindow()`
+anlegen – nur dann bekommen sie einen Button in der `Taskbar`. Die Taskleiste im Windows-Stil: links
+Start-Menü (Programme + Pause/Speichern/Hauptmenü), Mitte ein Button pro offenem Fenster (Klick =
+wiederherstellen / nach vorne / minimieren), rechts Feierabend, Punkte, Verwarnungen, Tagesfortschritt,
+Uhr + Tag, ganz außen „Desktop anzeigen". Das oberste sichtbare Fenster trägt die Pseudoklasse
+`:active`. Fenster, die das Spiel anhalten (Verwarnung), sind `setMinimizable(false)`.
 
 **Schichtregel:** `model` und `logic` dürfen **kein** `javafx.*` importieren. Alles, was Spielregeln
 betrifft, lebt in `logic` und ist per JUnit testbar. Die UI ruft nur `GameSession` auf.
@@ -147,7 +155,9 @@ desto öfter basiert eine Phishing-Mail auf einer harmlos klingenden Vorlage.
 - **UI-Prüfung nur off-screen:** `ui/UiSmokeTest` startet das JavaFX-Toolkit ohne Fenster, baut jeden
   Screen in einer unsichtbaren Scene, wendet `styles.css` an und prüft Layout/Textfarben. Neue Views
   dort ergänzen. Das Spiel **nicht** automatisiert starten und durchklicken (keine Maus-/Tastatur-
-  Automation auf dem Desktop des Nutzers) – `./mvnw javafx:run` ist für den Menschen.
+  Automation auf dem Desktop des Nutzers) – `./mvnw javafx:run` ist für den Menschen. Wer das
+  Ergebnis *sehen* will: im Test `root.resize(W, H)` + `layout()`, dann `scene.snapshot(null)` und die
+  Pixel als Bild speichern – das rendert ebenfalls komplett ohne Fenster.
 - JavaFX-CSS-Falle: nie `-fx-background: transparent` setzen (macht Label-Text weiß); für transparente
   ScrollPanes nur `-fx-background-color` auf `.plain-scroll` und `.viewport`.
 - JavaFX-CSS-Falle 2: Aufgeklappte Menüs hängen im CSS-Baum unter ihrem `MenuButton`. Deshalb Button-Text

@@ -88,19 +88,68 @@
     -fx-background-radius: 10;
 }
 
+/* ===== Taskleiste (Windows-Stil) ===== */
 .taskbar {
     -fx-background-color: #1e2a3a;
+    -fx-border-color: #3a4d66 transparent transparent transparent;
 }
 .taskbar-text { -fx-text-fill: #d8e0ea; }
-.taskbar-clock { -fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold; }
+.taskbar-clock { -fx-text-fill: white; -fx-font-size: 15px; -fx-font-weight: bold; }
+.taskbar-date { -fx-text-fill: #b8c4d3; -fx-font-size: 11px; }
+
+/* Start-Button: Firmenlogo + "Start", ohne Pfeil */
 .taskbar .menu-button {
-    -fx-background-color: #2f3f55;
+    -fx-background-color: transparent;
     -fx-background-radius: 6;
+    -fx-padding: 5 12 5 6;
+    -fx-graphic-text-gap: 8;
+    -fx-cursor: hand;
 }
+.taskbar .menu-button:hover,
+.taskbar .menu-button:showing { -fx-background-color: #2f3f55; }
 /* Nur das Label DIREKT im Button weiß färben. Ein Nachfahren-Selektor (".menu-button .label")
    würde auch die Einträge im aufgeklappten Menü treffen – das Popup hängt im CSS am Button. */
-.taskbar .menu-button > .label { -fx-text-fill: white; }
-.taskbar .menu-button > .arrow-button > .arrow { -fx-background-color: white; }
+.taskbar .menu-button > .label { -fx-text-fill: white; -fx-font-weight: bold; }
+.taskbar .menu-button > .arrow-button { -fx-padding: 0; }
+.taskbar .menu-button > .arrow-button > .arrow { -fx-padding: 0; -fx-background-color: transparent; }
+
+/* Ein Button pro offenem Fenster; Strich unten wie unter Windows */
+.task-button {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 5;
+    -fx-text-fill: #d8e0ea;
+    -fx-padding: 6 10 6 8;
+    -fx-graphic-text-gap: 8;
+    -fx-alignment: center-left;
+    -fx-border-color: transparent transparent #6f819a transparent;
+    -fx-border-width: 0 0 2 0;
+    -fx-border-insets: 0 12 0 12;
+    -fx-cursor: hand;
+}
+.task-button:hover { -fx-background-color: rgba(255, 255, 255, 0.08); }
+.task-button:active {
+    -fx-background-color: rgba(255, 255, 255, 0.17);
+    -fx-text-fill: white;
+    -fx-border-color: transparent transparent #5AA9FF transparent;
+    -fx-border-width: 0 0 3 0;
+    -fx-border-insets: 0 6 0 6;
+}
+.task-button:minimized { -fx-text-fill: #9fb0c4; -fx-border-color: transparent transparent #4c5d74 transparent; }
+
+/* "Desktop anzeigen": schmaler Streifen ganz rechts */
+.show-desktop {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+    -fx-border-color: transparent transparent transparent #4c5d74;
+    -fx-border-width: 0 0 0 1;
+    -fx-padding: 0;
+    -fx-min-width: 10;
+    -fx-pref-width: 10;
+    -fx-cursor: hand;
+}
+.show-desktop:hover { -fx-background-color: rgba(255, 255, 255, 0.14); }
 
 /* Aufgeklappte Menüs: dunkler Text auf weißem Grund, Auswahl weiß auf Blau */
 .context-menu {
@@ -136,16 +185,21 @@
     -fx-background-radius: 6 6 0 0;
     -fx-border-color: transparent transparent #b9c2cf transparent;
 }
-.window-title { -fx-font-weight: bold; -fx-text-fill: #1e2a3a; }
-.window-close {
-    -fx-background-color: #E53935;
-    -fx-text-fill: white;
+/* Fenster im Vordergrund (":active", gesetzt von der Taskleiste) hat eine blau getönte Titelleiste */
+.desktop-window:active > .window-titlebar { -fx-background-color: linear-gradient(to bottom, #e4edfa, #cbdaf0); }
+.window-title { -fx-font-weight: bold; -fx-text-fill: #5f6b7a; }
+.desktop-window:active > .window-titlebar > .window-title { -fx-text-fill: #1e2a3a; }
+.window-close, .window-minimize {
     -fx-font-weight: bold;
     -fx-padding: 1 8 1 8;
+    -fx-min-width: 30;
     -fx-background-radius: 4;
     -fx-cursor: hand;
 }
+.window-close { -fx-background-color: #E53935; -fx-text-fill: white; }
 .window-close:hover { -fx-background-color: #C62828; }
+.window-minimize { -fx-background-color: #c9d1dc; -fx-text-fill: #1e2a3a; }
+.window-minimize:hover { -fx-background-color: #b3bdca; }
 
 /* ===== Mail-Programm ===== */
 .inbox-pane { -fx-background-color: #eef1f5; -fx-border-color: transparent #c9d1dc transparent transparent; }

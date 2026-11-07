@@ -109,6 +109,12 @@ public class MailAppView extends BorderPane {
     }
 
     private class MailCell extends ListCell<Email> {
+        MailCell() {
+            // Zelle nie breiter als die Liste: lange Namen werden mit "…" gekürzt statt eine
+            // horizontale Scrollleiste zu erzeugen (die Uhrzeit rechts bleibt immer sichtbar).
+            setPrefWidth(0);
+        }
+
         @Override
         protected void updateItem(Email mail, boolean empty) {
             super.updateItem(mail, empty);
@@ -120,8 +126,10 @@ public class MailAppView extends BorderPane {
             boolean unread = !session.isRead(mail);
             Label name = new Label(mail.senderName());
             name.getStyleClass().add(unread ? "bold" : "normal");
+            name.setMinWidth(0);
             Label time = new Label(mail.receivedAt());
             time.getStyleClass().add("muted");
+            time.setMinWidth(Region.USE_PREF_SIZE);
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
             HBox top = new HBox(6, name, spacer, time);
@@ -129,6 +137,7 @@ public class MailAppView extends BorderPane {
             subject.getStyleClass().add("mail-subject");
             subject.setMaxWidth(170);
             VBox texts = new VBox(2, top, subject);
+            texts.setMinWidth(0);
             HBox.setHgrow(texts, Priority.ALWAYS);
             Circle dot = new Circle(5, unread ? Color.web("#E53935") : Color.TRANSPARENT);
             HBox row = new HBox(8, avatar(mail.senderName(), 18), texts, dot);

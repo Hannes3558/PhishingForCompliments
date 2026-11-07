@@ -2,6 +2,7 @@ package com.example.phishingforcompliments.ui;
 
 import com.example.phishingforcompliments.PhishingApp;
 import com.example.phishingforcompliments.logic.ChefMessages;
+import com.example.phishingforcompliments.logic.CorporateGuidelines;
 import com.example.phishingforcompliments.logic.GameSession;
 import com.example.phishingforcompliments.model.DecisionResult;
 import com.example.phishingforcompliments.model.GameState;
@@ -10,6 +11,8 @@ import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Side;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -19,11 +22,11 @@ import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -32,6 +35,8 @@ import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 
 import java.util.HashMap;
@@ -40,11 +45,19 @@ import java.util.function.Supplier;
 
 /**
  * Der "Homescreen" (Skizze 2): Hintergrund mit Hügeln, Icons für Mail, Handbuch,
- * Corporate Guidelines und Tagesanweisung, Taskleiste mit Uhr, Punkten und Feierabend.
+ * Corporate Guidelines und Tagesanweisung. Unten eine Taskleiste im Windows-Stil
+ * ({@link Taskbar}): Start-Menü, ein Button pro offenem (auch minimiertem) Fenster und der
+ * Infobereich mit Feierabend, Punkten, Verwarnungen und Uhr.
  */
 public class DesktopScreen extends BorderPane {
 
     static final double MAIL_WINDOW_WIDTH = 960;
+
+    // Programm-Icons in klein (Titelleiste, Taskleiste, Start-Menü) – jeder Ort braucht einen eigenen Node
+    private static final Supplier<Node> MAIL_ICON = () -> small(envelopeGraphic(), 18);
+    private static final Supplier<Node> HANDBOOK_ICON = () -> small(bookIcon(), 18);
+    private static final Supplier<Node> GUIDELINES_ICON = () -> small(paragraphIcon(), 18);
+    private static final Supplier<Node> NOTE_ICON = () -> small(noteIcon(), 18);
 
     private final PhishingApp app;
     private final GameSession session;
@@ -52,6 +65,7 @@ public class DesktopScreen extends BorderPane {
     private final Pane windowLayer = new Pane();
     private final Map<String, DesktopWindow> windows = new HashMap<>();
     private final PauseOverlay pauseOverlay;
+    private final Taskbar taskbar;
     private final AnimationTimer timer;
     private long lastNanos;
 
@@ -73,7 +87,8 @@ public class DesktopScreen extends BorderPane {
         StackPane stack = new StackPane(desktopArea, pauseOverlay);
 
         setCenter(stack);
-        setBottom(buildTaskbar());
+        taskbar = new Taskbar(windowLayer, buildStartMenu(), buildTray());
+        setBottom(taskbar);
 
         session.setOnTimeOver(this::onTimeOver);
         timer = new AnimationTimer() {
@@ -104,6 +119,10 @@ public class DesktopScreen extends BorderPane {
 
     public void dispose() {
         timer.stop();
+    }
+
+    Taskbar taskbar() {
+        return taskbar;
     }
 
     // ------------------------------------------------------------------
@@ -158,11 +177,10 @@ public class DesktopScreen extends BorderPane {
 
     private Node buildIcons() {
         VBox icons = new VBox(22,
-                icon("E-Mail", envelopeIcon(), () -> openMailApp()),
-                icon("Handbuch", bookIcon(), () -> open("handbook", "Handbuch", HandbookView::new, 620, 460, 180, 60)),
-                icon("Corporate\nGuidelines", paragraphIcon(),
-                        () -> open("guidelines", "Corporate Guidelines", () -> new GuidelinesView(session.state().day()), 760, 560, 240, 40)),
-                icon("Anweisung", noteIcon(), () -> openChefMessage("Tagesanweisung", briefing, "Schließen", null)));
+                icon("E-Mail", envelopeIcon(), this::openMailApp),
+                icon("Handbuch", bookIcon(), this::openHandbook),
+                icon("Corporate\nGuidelines", paragraphIcon(), this::openGuidelines),
+                icon("Anweisung", noteIcon(), this::openBriefing));
         icons.setPadding(new Insets(24));
         icons.setAlignment(Pos.TOP_CENTER);
         icons.setFillWidth(false);
@@ -187,6 +205,16 @@ public class DesktopScreen extends BorderPane {
     }
 
     private Node envelopeIcon() {
+        mailBadge.getStyleClass().add("badge");
+        StackPane.setAlignment(mailBadge, Pos.TOP_RIGHT);
+        mailBadge.setTranslateX(10);
+        mailBadge.setTranslateY(-10);
+        StackPane withBadge = new StackPane(envelopeGraphic(), mailBadge);
+        withBadge.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        return withBadge;
+    }
+
+    private static Node envelopeGraphic() {
         Rectangle env = new Rectangle(56, 38, Color.WHITE);
         env.setStroke(Color.web("#1F5FBF"));
         env.setStrokeWidth(3);
@@ -197,14 +225,7 @@ public class DesktopScreen extends BorderPane {
         flap.setStrokeWidth(3);
         StackPane envelope = new StackPane(env, flap);
         StackPane.setAlignment(flap, Pos.TOP_CENTER);
-
-        mailBadge.getStyleClass().add("badge");
-        StackPane.setAlignment(mailBadge, Pos.TOP_RIGHT);
-        mailBadge.setTranslateX(10);
-        mailBadge.setTranslateY(-10);
-        StackPane withBadge = new StackPane(envelope, mailBadge);
-        withBadge.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-        return withBadge;
+        return envelope;
     }
 
     private static Node bookIcon() {
@@ -233,7 +254,7 @@ public class DesktopScreen extends BorderPane {
         bg.setArcHeight(8);
         Text p = new Text("§");
         p.setFill(Color.web("#C62828"));
-        p.setStyle("-fx-font-size: 36px; -fx-font-weight: bold;");
+        p.setFont(Font.font(null, FontWeight.BOLD, 36));
         return new StackPane(bg, p);
     }
 
@@ -251,8 +272,36 @@ public class DesktopScreen extends BorderPane {
         return new StackPane(note, lines);
     }
 
-    private Node buildTaskbar() {
-        MenuButton menu = new MenuButton("☰  Menü");
+    /** Verkleinert ein Desktop-Icon (ca. 56 px) auf {@code size} Pixel. */
+    private static Node small(Node icon, double size) {
+        double scale = size / 56.0;
+        icon.setScaleX(scale);
+        icon.setScaleY(scale);
+        StackPane box = new StackPane(new Group(icon));
+        box.setPrefSize(size, size);
+        box.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        box.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        box.setMouseTransparent(true);
+        return box;
+    }
+
+    /** Start-Menü (links in der Taskleiste): Programme und Spiel-Funktionen. */
+    private MenuButton buildStartMenu() {
+        MenuButton start = new MenuButton("Start", new LogoView(CorporateGuidelines.OFFICIAL_LOGO, 22));
+        start.getStyleClass().add("start-button");
+        start.setPopupSide(Side.TOP);
+        start.setFocusTraversable(false);
+        start.setMinWidth(Region.USE_PREF_SIZE);
+
+        MenuItem mail = new MenuItem("E-Mail", MAIL_ICON.get());
+        mail.setOnAction(e -> openMailApp());
+        MenuItem handbook = new MenuItem("Handbuch", HANDBOOK_ICON.get());
+        handbook.setOnAction(e -> openHandbook());
+        MenuItem guidelines = new MenuItem("Corporate Guidelines", GUIDELINES_ICON.get());
+        guidelines.setOnAction(e -> openGuidelines());
+        MenuItem note = new MenuItem("Tagesanweisung", NOTE_ICON.get());
+        note.setOnAction(e -> openBriefing());
+
         MenuItem pause = new MenuItem("Pause (Esc)");
         pause.setOnAction(e -> setPaused(true));
         MenuItem save = new MenuItem("Spielstand speichern");
@@ -269,45 +318,67 @@ public class DesktopScreen extends BorderPane {
         });
         MenuItem quit = new MenuItem("Speichern & Beenden");
         quit.setOnAction(e -> app.saveAndExit());
-        menu.getItems().addAll(pause, save, new SeparatorMenuItem(), toTitle, quit);
 
-        Label dayLabel = new Label("Tag " + session.state().day() + " / " + GameState.CAMPAIGN_DAYS);
-        dayLabel.getStyleClass().add("taskbar-text");
-        clockLabel.getStyleClass().add("taskbar-clock");
-        dayProgress.setPrefWidth(120);
-        scoreLabel.getStyleClass().add("taskbar-text");
-        warnLabel.getStyleClass().add("taskbar-text");
+        start.getItems().addAll(mail, handbook, guidelines, note, new SeparatorMenuItem(),
+                pause, save, new SeparatorMenuItem(), toTitle, quit);
+        return start;
+    }
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
+    /** Infobereich rechts in der Taskleiste: Feierabend, Punkte, Verwarnungen, Tagesfortschritt, Uhr + Tag. */
+    private Node buildTray() {
         Button endDay = new Button("Feierabend");
         endDay.getStyleClass().add("btn-end-day");
+        endDay.setFocusTraversable(false);
         endDay.setOnAction(e -> requestEndDay());
 
-        HBox bar = new HBox(18, menu, dayLabel, clockLabel, dayProgress, scoreLabel, warnLabel, spacer, endDay);
-        bar.getStyleClass().add("taskbar");
-        bar.setAlignment(Pos.CENTER_LEFT);
-        bar.setPadding(new Insets(6, 12, 6, 12));
-        return bar;
+        scoreLabel.getStyleClass().add("taskbar-text");
+        warnLabel.getStyleClass().add("taskbar-text");
+        dayProgress.setPrefWidth(90);
+        Tooltip.install(dayProgress, new Tooltip("Arbeitstag 09:00 – 17:00"));
+
+        Label dayLabel = new Label("Tag " + session.state().day() + " / " + GameState.CAMPAIGN_DAYS);
+        dayLabel.getStyleClass().add("taskbar-date");
+        clockLabel.getStyleClass().add("taskbar-clock");
+        VBox clock = new VBox(-1, clockLabel, dayLabel);
+        clock.setAlignment(Pos.CENTER);
+        clock.getStyleClass().add("tray-clock");
+
+        HBox tray = new HBox(16, endDay, scoreLabel, warnLabel, dayProgress, clock);
+        tray.getStyleClass().add("tray");
+        tray.setAlignment(Pos.CENTER_RIGHT);
+        tray.setPadding(new Insets(0, 10, 0, 8));
+        for (Node n : tray.getChildren()) {
+            if (n instanceof Region r) {
+                r.setMinWidth(Region.USE_PREF_SIZE);
+            }
+        }
+        tray.setMinWidth(Region.USE_PREF_SIZE);
+        return tray;
     }
 
     // ------------------------------------------------------------------
     // Fenster
     // ------------------------------------------------------------------
 
-    private DesktopWindow open(String key, String title, Supplier<Node> content,
+    /** Öffnet ein Programmfenster – oder holt das schon offene (auch minimierte) nach vorne. */
+    private DesktopWindow open(String key, String title, Supplier<Node> icon, Supplier<Node> content,
                                double w, double h, double x, double y) {
         DesktopWindow existing = windows.get(key);
         if (existing != null) {
-            existing.toFront();
+            existing.restore();
             return existing;
         }
-        DesktopWindow win = new DesktopWindow(title, content.get(), w, h, () -> windows.remove(key));
+        DesktopWindow win = new DesktopWindow(title, content.get(), w, h, null).setIcon(icon);
         win.relocate(x, y);
-        windows.put(key, win);
-        windowLayer.getChildren().add(win);
+        addWindow(key, win);
         return win;
+    }
+
+    private void addWindow(String key, DesktopWindow win) {
+        windows.put(key, win);
+        win.addCloseListener(() -> windows.remove(key, win));
+        windowLayer.getChildren().add(win);
+        taskbar.track(win);
     }
 
     private void openMailApp() {
@@ -316,28 +387,41 @@ public class DesktopScreen extends BorderPane {
         } else {
             mailApp.refreshList();
         }
-        open("mail", "E-Mail – " + session.state().playerName(), () -> mailApp, MAIL_WINDOW_WIDTH, 600, 140, 20);
+        open("mail", "E-Mail – " + session.state().playerName(), MAIL_ICON, () -> mailApp,
+                MAIL_WINDOW_WIDTH, 600, 140, 20);
     }
 
-    private void openChefMessage(String heading, String text, String buttonText, Runnable afterClose) {
+    private void openHandbook() {
+        open("handbook", "Handbuch", HANDBOOK_ICON, HandbookView::new, 620, 460, 180, 60);
+    }
+
+    private void openGuidelines() {
+        open("guidelines", "Corporate Guidelines", GUIDELINES_ICON,
+                () -> new GuidelinesView(session.state().day()), 760, 560, 240, 40);
+    }
+
+    private void openBriefing() {
+        openChefMessage("Tagesanweisung", briefing, "Schließen", null);
+    }
+
+    private DesktopWindow openChefMessage(String heading, String text, String buttonText, Runnable afterClose) {
         String key = "chef-" + heading;
-        DesktopWindow old = windows.remove(key);
+        DesktopWindow old = windows.get(key);
         if (old != null) {
-            old.close(null);
+            old.close();
         }
         DesktopWindow[] holder = new DesktopWindow[1];
         ChefMessageView view = new ChefMessageView(heading, text, buttonText, () -> {
-            holder[0].close(null);
-            windows.remove(key);
+            holder[0].close();
             if (afterClose != null) {
                 afterClose.run();
             }
         });
-        holder[0] = new DesktopWindow("Nachricht von " + ChefMessages.BOSS_NAME, view, 520, 420,
-                () -> windows.remove(key));
+        // Kurzer Titel, damit er in der Taskleiste lesbar bleibt; die Absenderin steht in der Nachricht
+        holder[0] = new DesktopWindow(heading, view, 520, 420, null).setIcon(NOTE_ICON);
         holder[0].relocate(330, 90);
-        windows.put(key, holder[0]);
-        windowLayer.getChildren().add(holder[0]);
+        addWindow(key, holder[0]);
+        return holder[0];
     }
 
     // ------------------------------------------------------------------
@@ -349,6 +433,7 @@ public class DesktopScreen extends BorderPane {
         if (result.outcome() == Outcome.FILED_WRONG) {
             boolean fired = session.state().isFired();
             session.setPaused(true);
+            // Die Verwarnung hält das Spiel an – darum nicht minimierbar (sonst stünde die Uhr unsichtbar still)
             openChefMessage("Verwarnung", ChefMessages.warning(session.state(), result),
                     fired ? "Schreibtisch räumen" : "Verstanden",
                     () -> {
@@ -356,7 +441,7 @@ public class DesktopScreen extends BorderPane {
                         if (fired) {
                             app.endDay();
                         }
-                    });
+                    }).setMinimizable(false);
         }
     }
 

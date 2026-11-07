@@ -10,6 +10,7 @@ import com.example.phishingforcompliments.model.Feature;
 import com.example.phishingforcompliments.model.GameState;
 import com.example.phishingforcompliments.model.Outcome;
 import javafx.application.Platform;
+import javafx.css.PseudoClass;
 import javafx.event.Event;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
@@ -45,6 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -143,6 +145,48 @@ class UiSmokeTest {
         return n != null && n.isVisible() ? (Label) n : null;
     }
 
+    private static Node desktopIcon(Parent root, String label) {
+        return root.lookupAll(".desktop-icon").stream()
+                .filter(icon -> icon.lookupAll(".desktop-icon-label").stream()
+                        .anyMatch(l -> label.equals(((Label) l).getText())))
+                .findFirst().orElseThrow(() -> new AssertionError("Desktop-Icon fehlt: " + label));
+    }
+
+    private static List<Button> taskButtons(Parent root) {
+        return root.lookupAll(".task-button").stream().map(Button.class::cast).toList();
+    }
+
+    private static boolean has(Node node, String pseudoClass) {
+        return node.getPseudoClassStates().contains(PseudoClass.getPseudoClass(pseudoClass));
+    }
+
+    private static void fireStartMenu(Parent root, String item) {
+        MenuButton start = (MenuButton) root.lookup(".start-button");
+        start.getItems().stream().filter(i -> item.equals(i.getText())).findFirst()
+                .orElseThrow(() -> new AssertionError("Start-Menü-Eintrag fehlt: " + item)).fire();
+    }
+
+    private static void assertNotCutOff(Region r, String what) {
+        assertTrue(r.getWidth() >= r.prefWidth(-1) - 0.5, what + " ist abgeschnitten");
+    }
+
+    /**
+     * Baut einen Desktop und wartet, bis die Tagesanweisung (per Platform.runLater) offen ist:
+     * das zweite onFx läuft erst nach allem, was der Konstruktor eingereiht hat.
+     */
+    private static DesktopScreen desktopWithBriefing(int day) throws Exception {
+        DesktopScreen desktop = onFx(() -> {
+            DesktopScreen d = new DesktopScreen(new PhishingApp(), startedSession(day), "Hallo");
+            layout(d);
+            return d;
+        });
+        onFx(() -> {
+            relayout(desktop);
+            return null;
+        });
+        return desktop;
+    }
+
     // ------------------------------------------------------------------
     // Tests
     // ------------------------------------------------------------------
@@ -212,6 +256,128 @@ class UiSmokeTest {
     }
 
     @Test
+    void windowsMinimizeToTheTaskbarAndComeBack() throws Exception {
+        DesktopScreen desktop = desktopWithBriefing(1);
+        onFx(() -> {
+            try {
+                Taskbar taskbar = desktop.taskbar();
+                assertEquals(1, taskButtons(desktop).size(), "Tagesanweisung gehört in die Taskleiste");
+                DesktopWindow briefing = taskbar.activeWindow();
+                assertNotNull(briefing);
+                assertTrue(has(briefing, "active"));
+
+                click(desktopIcon(desktop, "E-Mail"));
+                relayout(desktop);
+                DesktopWindow mail = taskbar.activeWindow();
+                assertTrue(mail.getTitle().startsWith("E-Mail"), mail.getTitle());
+                assertEquals(2, taskButtons(desktop).size());
+                assertTrue(has(taskbar.buttonFor(mail), "active"));
+                assertFalse(has(taskbar.buttonFor(briefing), "active"), "nur ein Fenster ist im Vordergrund");
+                assertFalse(has(briefing, "active"));
+
+                // Minimieren über die Titelleiste: Fenster weg, Button bleibt (gedimmt)
+                click(mail.lookup(".window-minimize"));
+                relayout(desktop);
+                assertTrue(mail.isMinimized());
+                assertFalse(mail.isVisible());
+                assertEquals(2, taskButtons(desktop).size());
+                assertTrue(has(taskbar.buttonFor(mail), "minimized"));
+                assertSame(briefing, taskbar.activeWindow(), "nächstes Fenster rückt in den Vordergrund");
+
+                // Taskleisten-Button: wiederherstellen, beim zweiten Klick (im Vordergrund) minimieren
+                click(taskbar.buttonFor(mail));
+                assertTrue(mail.isVisible());
+                assertSame(mail, taskbar.activeWindow());
+                click(taskbar.buttonFor(mail));
+                assertTrue(mail.isMinimized());
+
+                // Desktop-Icon holt das minimierte Fenster zurück statt ein zweites zu öffnen
+                click(desktopIcon(desktop, "E-Mail"));
+                assertFalse(mail.isMinimized());
+                assertEquals(2, taskButtons(desktop).size());
+
+                // Verdecktes Fenster per Taskleiste nach vorne holen
+                click(taskbar.buttonFor(briefing));
+                assertSame(briefing, taskbar.activeWindow());
+                assertFalse(briefing.isMinimized());
+
+                // "Desktop anzeigen": alles minimieren, zweiter Klick stellt die alte Reihenfolge her
+                click(desktop.lookup(".show-desktop"));
+                assertNull(taskbar.activeWindow());
+                assertTrue(mail.isMinimized() && briefing.isMinimized());
+                click(desktop.lookup(".show-desktop"));
+                assertSame(briefing, taskbar.activeWindow());
+                assertFalse(mail.isMinimized());
+
+                // Schließen entfernt den Button
+                click(briefing.lookup(".window-close"));
+                relayout(desktop);
+                assertEquals(1, taskButtons(desktop).size());
+                assertSame(mail, taskbar.activeWindow());
+            } finally {
+                desktop.dispose();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    void startMenuOpensProgramsAndTaskbarLayoutFits() throws Exception {
+        DesktopScreen desktop = desktopWithBriefing(3);
+        onFx(() -> {
+            try {
+                for (String program : List.of("E-Mail", "Handbuch", "Corporate Guidelines")) {
+                    fireStartMenu(desktop, program);
+                }
+                fireStartMenu(desktop, "Handbuch"); // schon offen → kein zweites Fenster
+                relayout(desktop);
+                assertEquals(4, taskButtons(desktop).size());
+                assertEquals("Handbuch", desktop.taskbar().activeWindow().getTitle());
+
+                Region bar = desktop.taskbar();
+                Bounds barBounds = bar.localToScene(bar.getBoundsInLocal());
+                assertTrue(bar.getHeight() >= 40, "Taskleiste zu flach: " + bar.getHeight());
+                assertTrue(barBounds.getMaxX() <= W + 0.5);
+
+                MenuButton start = (MenuButton) desktop.lookup(".start-button");
+                assertNotCutOff(start, "Start-Button");
+                assertNotCutOff(buttonWithText(desktop, "Feierabend"), "Feierabend");
+                Node tray = desktop.lookup(".tray");
+                Bounds trayBounds = tray.localToScene(tray.getBoundsInLocal());
+                for (Node n : tray.lookupAll(".label")) {
+                    if (n instanceof Label l && l.getStyleClass().stream().anyMatch(c -> c.startsWith("taskbar-"))) {
+                        assertNotCutOff(l, "\"" + l.getText() + "\"");
+                    }
+                }
+                for (Button b : taskButtons(desktop)) {
+                    Bounds bb = b.localToScene(b.getBoundsInLocal());
+                    assertTrue(bb.getMaxX() <= trayBounds.getMinX() + 0.5, "Task-Button überlappt den Infobereich");
+                    assertTrue(b.getWidth() >= 44, "Task-Button zu schmal");
+                }
+                Node showDesktop = desktop.lookup(".show-desktop");
+                Bounds sd = showDesktop.localToScene(showDesktop.getBoundsInLocal());
+                assertTrue(sd.getMaxX() >= W - 1, "\"Desktop anzeigen\" gehört an den rechten Rand");
+                assertTrue(sd.getHeight() >= bar.getHeight() - 2, "\"Desktop anzeigen\" soll die volle Höhe haben");
+            } finally {
+                desktop.dispose();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    void blockingWindowsCannotBeMinimized() throws Exception {
+        onFx(() -> {
+            DesktopWindow w = new DesktopWindow("Verwarnung", new Label("!"), 300, 200, null).setMinimizable(false);
+            layout(new Pane(w));
+            w.minimize();
+            assertFalse(w.isMinimized());
+            assertFalse(w.lookup(".window-minimize").isVisible());
+            return null;
+        });
+    }
+
+    @Test
     void openedMenuItemsAreDarkOnWhite() throws Exception {
         onFx(() -> {
             // Ein aufgeklapptes Menü hängt im CSS-Baum unter seinem MenuButton:
@@ -246,6 +412,12 @@ class UiSmokeTest {
 
             ListView<Email> list = mailList(mailApp);
             assertEquals(session.openMails().size(), list.getItems().size());
+            relayout(layer);
+            boolean horizontalScroll = list.lookupAll(".scroll-bar").stream()
+                    .filter(javafx.scene.control.ScrollBar.class::isInstance)
+                    .map(javafx.scene.control.ScrollBar.class::cast)
+                    .anyMatch(sb -> sb.getOrientation() == javafx.geometry.Orientation.HORIZONTAL && sb.isVisible());
+            assertFalse(horizontalScroll, "Posteingang darf nicht seitlich scrollen (lange Namen kürzen)");
             for (Email shown : list.getItems()) {
                 list.getSelectionModel().select(shown);
                 relayout(layer);
